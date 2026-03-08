@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BGMI Queued Elimination Ribbon</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: transparent; }
+
+        #status { position: absolute; top: 10px; left: 10px; color: rgba(255,255,255,0.4); font-size: 11px; }
+
+        #alert-display {
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: scale(0.8) translateY(50px);
+        }
+
+        #banner {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, #111 0%, #333 50%, #111 100%);
+            border: 2px solid #555;
+            border-radius: 6px;
+            padding: 10px 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 2; 
+        }
+
+        #logo-container {
+            width: 90px;
+            height: 90px;
+            background-color: #f39c12; 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 20px;
+            box-shadow: 0 0 15px rgba(243,156,18,0.5);
+        }
+
+        #team-logo { width: 75px; height: 75px; object-fit: contain; }
+
+        #team-name { color: white; font-size: 38px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 3px; }
+
+        #ribbon {
+            background-color: #880000; 
+            border: 2px solid #cc0000;
+            color: white;
+            padding: 8px 50px;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transform: translateY(-5px); 
+            z-index: 1; 
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .intro-anim {
+            animation: 
+                slideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+                fadeIn 0.6s ease-out forwards;
+        }
+
+        .exit-anim {
+            animation: 
+                slideOut 0.4s ease-in forwards,
+                fadeOut 0.4s ease-in forwards;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        @keyframes slideIn {
+            0% { transform: scale(0.8) translateY(50px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        @keyframes slideOut {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(0.9) translateY(-100px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="status">Syncing...</div>
+
+    <div id="alert-display">
+        <div id="banner">
+            <div id="logo-container">
+                <img id="team-logo" src="" onerror="this.src='https://via.placeholder.com/150?text=NO+LOGO'">
+            </div>
+            <p id="team-name">TEAM NAME</p>
+        </div>
+        <div id="ribbon">
+            ELIMINATED
+        </div>
+    </div>
+
+    <script>
+        const sheetID = '1Mu6kmtRnnps_Us9kL9q54Vq7PZB579vn28xsm5WvVw8';
+        const pointsGid = '0';
+        const infoGid = '1160777220';
+        
+        const pointsUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/export?format=csv&gid=${pointsGid}`;
+        const infoUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/export?format=csv&gid=${infoGid}`;
+
+        let teamDatabase = {}; 
+        let aliveTeamsSet = new Set();
+        let isFirstLoad = true;
+
+        let eliminationQueue = [];
+        let isAlertShowing = false;
+        const alertShowTime = 5000;  
+        const queueDelay = 1000;     
+
+        // --- NEW GOOGLE DRIVE FIX ---
+        // Converts standard Drive links to direct Thumbnail API links
+        function getDriveImage(url) {
+            if (!url) return '';
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+            }
+            return url;
+        }
+
+        function fetchTeamInfo() {
+            fetch(infoUrl).then(res => res.text()).then(data => {
+                const rows = data.split('\n');
+                rows.forEach((row, index) => {
+                    if (index === 0) return;
+                    const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
+                    // Run the URL through the new converter before storing it
+                    if (cols[0]) teamDatabase[cols[0]] = getDriveImage(cols[1]);
+                });
+            });
+        }
+
+        function checkEliminations() {
+            fetch(pointsUrl).then(res => res.text()).then(data => {
+                document.getElementById('status').innerText = "Last Sync: " + new Date().toLocaleTimeString();
+                const rows = data.split('\n').filter(row => row.trim().length > 0);
+                let currentlyAlive = [];
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i].split(',').map(col => col.replace(/(^"|"$)/g, '').trim());
+                    
+                    if (cols.length >= 7) {
+                        const name = cols[0];
+                        const players = [cols[3], cols[4], cols[5], cols[6]].map(p => p.toLowerCase());
+                        const isAlive = players.some(p => p === 'a');
+
+                        if (isAlive) {
+                            currentlyAlive.push(name);
+                        } else {
+                            if (!isFirstLoad && aliveTeamsSet.has(name)) {
+                                eliminationQueue.push({ name: name });
+                            }
+                        }
+                    }
+                }
+                aliveTeamsSet = new Set(currentlyAlive);
+                isFirstLoad = false;
+                
+                processQueue();
+            });
+        }
+
+        function processQueue() {
+            if (eliminationQueue.length > 0 && !isAlertShowing) {
+                isAlertShowing = true; 
+                const teamData = eliminationQueue.shift(); 
+                
+                showEliminationAlert(teamData, () => {
+                    setTimeout(() => {
+                        isAlertShowing = false; 
+                        processQueue(); 
+                    }, queueDelay);
+                });
+            }
+        }
+
+        function showEliminationAlert(teamData, onFinishedCallback) {
+            const display = document.getElementById('alert-display');
+            const nameLabel = document.getElementById('team-name');
+            const logoImg = document.getElementById('team-logo');
+
+            nameLabel.innerText = teamData.name;
+            logoImg.src = teamDatabase[teamData.name] || 'https://via.placeholder.com/150?text=NO+LOGO';
+
+            display.style.display = 'flex';
+            display.classList.remove('exit-anim');
+            display.classList.add('intro-anim');
+
+            setTimeout(() => {
+                display.classList.remove('intro-anim');
+                display.classList.add('exit-anim');
+
+                setTimeout(() => {
+                    display.style.display = 'none';
+                    onFinishedCallback();
+                }, 400); 
+            }, alertShowTime); 
+        }
+
+        fetchTeamInfo();
+        setInterval(fetchTeamInfo, 60000);
+        
+        checkEliminations();
+        setInterval(checkEliminations, 5000); 
+    </script>
+</body>
+</html>
