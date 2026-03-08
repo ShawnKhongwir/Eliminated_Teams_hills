@@ -1,273 +1,218 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live BGMI Points - Animated & Paginated</title>
+    <title>BGMI Queued Elimination Ribbon</title>
     <style>
-        body {
-            width: 280px; 
-            background-color: transparent;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        
-        #title-bar {
-            background: linear-gradient(90deg, #f39c12, #e67e22);
-            color: #000;
-            text-align: center;
-            font-weight: 900;
-            font-size: 13px;
-            text-transform: uppercase;
-            padding: 6px 0;
-            letter-spacing: 1px;
-            border-top-left-radius: 6px;
-            border-top-right-radius: 6px;
-            border: 2px solid #222;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            position: relative;
-            z-index: 10;
+        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: transparent; }
+
+        #status { position: absolute; top: 10px; left: 10px; color: rgba(255,255,255,0.4); font-size: 11px; }
+
+        #alert-display {
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: scale(0.8) translateY(50px);
         }
 
-        #table-wrapper {
-            background: rgba(15, 15, 20, 0.95);
-            border: 2px solid #222;
-            border-top: none;
-            position: relative;
-            height: 537px; 
-            overflow: hidden;
-        }
-
-        .header-row {
-            display: flex;
-            background-color: #111;
-            color: #f39c12;
-            font-size: 10px;
-            text-transform: uppercase;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #team-list {
-            opacity: 1;
-            transition: opacity 0.4s ease-in-out;
-            position: relative;
-            height: 100%;
-        }
-
-        .team-row {
-            box-sizing: border-box; 
+        #banner {
             display: flex;
             align-items: center;
-            position: absolute; 
-            width: 100%;
-            height: 32px;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(90deg, #111 0%, #333 50%, #111 100%);
+            border: 2px solid #555;
+            border-radius: 6px;
+            padding: 10px 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 2; 
         }
 
-        .col-rank { width: 10%; text-align: center; color: #888; font-size: 11px; }
-        .col-pts { width: 14%; text-align: center; color: #f39c12; font-size: 13px; font-weight: bold; }
-        .col-tag { width: 20%; text-align: left; padding-left: 5px; font-weight: bold; letter-spacing: 1px; }
-        .col-total { width: 18%; text-align: center; color: #34dbeb; font-size: 14px; font-weight: 900; }
-        .col-alive { width: 24%; display: flex; justify-content: center; gap: 2px; }
-        .col-fin { width: 14%; text-align: center; font-weight: bold; }
-
-        /* Elimination Effect */
-        .eliminated {
-            background-color: rgba(231, 76, 60, 0.15) !important; 
-            opacity: 0.55; 
-            text-decoration: line-through;
-            color: #ffb3b3; 
+        #logo-container {
+            width: 90px;
+            height: 90px;
+            background-color: #f39c12; 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 20px;
+            box-shadow: 0 0 15px rgba(243,156,18,0.5);
         }
 
-        .eliminated .col-pts, 
-        .eliminated .col-rank,
-        .eliminated .col-total {
-            color: #ff9999; 
+        #team-logo { width: 75px; height: 75px; object-fit: contain; }
+
+        #team-name { color: white; font-size: 38px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 3px; }
+
+        #ribbon {
+            background-color: #880000; 
+            border: 2px solid #cc0000;
+            color: white;
+            padding: 8px 50px;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transform: translateY(-5px); 
+            z-index: 1; 
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
         }
 
-        .health-bar {
-            width: 5px; 
-            height: 14px;
-            border-radius: 1px;
-            border: 1px solid #000;
-            transition: background-color 0.3s;
+        .intro-anim {
+            animation: 
+                slideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+                fadeIn 0.6s ease-out forwards;
+        }
+
+        .exit-anim {
+            animation: 
+                slideOut 0.4s ease-in forwards,
+                fadeOut 0.4s ease-in forwards;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        @keyframes slideIn {
+            0% { transform: scale(0.8) translateY(50px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        @keyframes slideOut {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(0.9) translateY(-100px); }
         }
     </style>
 </head>
 <body>
 
-    <div id="title-bar">Hills Shillong</div>
-    <div id="table-wrapper">
-        <div class="header-row">
-            <div class="col-rank">#</div>
-            <div class="col-pts">M-Pts</div>
-            <div class="col-tag">Tag</div>
-            <div class="col-total">Total</div>
-            <div class="col-alive">Alive</div>
-            <div class="col-fin">Fin</div>
-        </div>
-        <div id="team-list">
+    <div id="status">Syncing...</div>
+
+    <div id="alert-display">
+        <div id="banner">
+            <div id="logo-container">
+                <img id="team-logo" src="" onerror="this.src='https://via.placeholder.com/150?text=NO+LOGO'">
             </div>
+            <p id="team-name">TEAM NAME</p>
+        </div>
+        <div id="ribbon">
+            ELIMINATED
+        </div>
     </div>
 
     <script>
-        const sheetID = '1Mu6kmtRnnps_Us9kL9q54Vq7PZB579vn28xsm5WvVw8'; 
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv`;
+        const sheetID = '1Mu6kmtRnnps_Us9kL9q54Vq7PZB579vn28xsm5WvVw8';
+        const pointsGid = '0';
+        const infoGid = '1160777220';
+        
+        const pointsUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/export?format=csv&gid=${pointsGid}`;
+        const infoUrl = `https://docs.google.com/spreadsheets/d/${sheetID}/export?format=csv&gid=${infoGid}`;
 
-        let allTeams = [];
-        let currentPage = 0;
-        const teamsPerPage = 16; 
-        let isPaginating = false; 
+        let teamDatabase = {}; 
+        let aliveTeamsSet = new Set();
+        let isFirstLoad = true;
 
-        function getHealthColor(status) {
-            if (!status) return 'rgba(255, 255, 255, 0.15)';
-            const s = status.toUpperCase();
-            if (s === 'A') return '#2ecc71'; 
-            if (s === 'D') return '#f1c40f'; 
-            if (s === 'K') return '#e74c3c'; 
-            return 'rgba(255, 255, 255, 0.15)';
+        let eliminationQueue = [];
+        let isAlertShowing = false;
+        const alertShowTime = 5000;  
+        const queueDelay = 1000;     
+
+        // --- NEW GOOGLE DRIVE FIX ---
+        // Converts standard Drive links to direct Thumbnail API links
+        function getDriveImage(url) {
+            if (!url) return '';
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+            }
+            return url;
         }
 
-        function getSafeId(name) {
-            return name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-        }
-
-        function createTeamRow(teamId) {
-            const div = document.createElement('div');
-            div.className = 'team-row';
-            div.id = `team-${teamId}`;
-            div.innerHTML = `
-                <div class="col-rank"></div>
-                <div class="col-pts" title="Current Match Points"></div>
-                <div class="col-tag"></div>
-                <div class="col-total" title="Overall Total Points"></div>
-                <div class="col-alive"></div>
-                <div class="col-fin"></div>
-            `;
-            document.getElementById('team-list').appendChild(div);
-            return div;
-        }
-
-        function renderPage() {
-            if (allTeams.length === 0 || isPaginating) return;
-
-            const startIndex = currentPage * teamsPerPage;
-            const displayTeams = allTeams.slice(startIndex, startIndex + teamsPerPage);
-            const visibleSafeIds = displayTeams.map(t => getSafeId(t.name));
-
-            document.querySelectorAll('.team-row').forEach(row => {
-                const rowId = row.id.replace('team-', '');
-                if (!visibleSafeIds.includes(rowId)) {
-                    row.style.display = 'none';
-                } else {
-                    row.style.display = 'flex';
-                }
-            });
-
-            displayTeams.forEach((team, index) => {
-                const safeId = getSafeId(team.name);
-                let row = document.getElementById(`team-${safeId}`);
-                
-                if (!row) {
-                    row = createTeamRow(safeId);
-                    row.style.display = 'flex';
-                }
-
-                // STRICT ELIMINATION CHECK: Only true if ALL 4 cells have a "K" or "k".
-                const isEliminated = 
-                    (team.p1 && team.p1.toUpperCase() === 'K') && 
-                    (team.p2 && team.p2.toUpperCase() === 'K') && 
-                    (team.p3 && team.p3.toUpperCase() === 'K') && 
-                    (team.p4 && team.p4.toUpperCase() === 'K');
-
-                if (isEliminated) {
-                    row.classList.add('eliminated');
-                } else {
-                    row.classList.remove('eliminated');
-                }
-
-                const yOffset = index * 32; 
-                row.style.transform = `translateY(${yOffset}px)`;
-                const globalRank = startIndex + index + 1;
-
-                row.querySelector('.col-rank').innerText = globalRank;
-                row.querySelector('.col-pts').innerText = team.matchPts;
-                row.querySelector('.col-tag').innerText = team.name.substring(0, 3).toUpperCase();
-                row.querySelector('.col-total').innerText = team.total; 
-                row.querySelector('.col-fin').innerText = team.finishes;
-                
-                row.querySelector('.col-alive').innerHTML = `
-                    <div class="health-bar" style="background-color: ${getHealthColor(team.p1)};"></div>
-                    <div class="health-bar" style="background-color: ${getHealthColor(team.p2)};"></div>
-                    <div class="health-bar" style="background-color: ${getHealthColor(team.p3)};"></div>
-                    <div class="health-bar" style="background-color: ${getHealthColor(team.p4)};"></div>
-                `;
+        function fetchTeamInfo() {
+            fetch(infoUrl).then(res => res.text()).then(data => {
+                const rows = data.split('\n');
+                rows.forEach((row, index) => {
+                    if (index === 0) return;
+                    const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
+                    // Run the URL through the new converter before storing it
+                    if (cols[0]) teamDatabase[cols[0]] = getDriveImage(cols[1]);
+                });
             });
         }
 
-        function fetchPoints() {
-            fetch(csvUrl)
-                .then(response => response.text())
-                .then(data => {
-                    const rows = data.split('\n').filter(row => row.trim().length > 0);
-                    let teams = [];
+        function checkEliminations() {
+            fetch(pointsUrl).then(res => res.text()).then(data => {
+                document.getElementById('status').innerText = "Last Sync: " + new Date().toLocaleTimeString();
+                const rows = data.split('\n').filter(row => row.trim().length > 0);
+                let currentlyAlive = [];
 
-                    for (let i = 1; i < rows.length; i++) {
-                        const cols = rows[i].split(',').map(col => col.replace(/(^"|"$)/g, '').trim());
-                        if (cols.length >= 8 && cols[0] !== "") {
-                            let team = {
-                                name: cols[0],
-                                score: parseInt(cols[1]) || 0,
-                                finishes: parseInt(cols[2]) || 0,
-                                p1: cols[3], p2: cols[4], p3: cols[5], p4: cols[6],
-                                wwcd: parseInt(cols[7]) || 0,
-                                prevPts: parseInt(cols[8]) || 0 
-                            };
-                            team.matchPts = team.score + team.finishes;
-                            team.total = team.prevPts + team.matchPts;
-                            teams.push(team);
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i].split(',').map(col => col.replace(/(^"|"$)/g, '').trim());
+                    
+                    if (cols.length >= 7) {
+                        const name = cols[0];
+                        const players = [cols[3], cols[4], cols[5], cols[6]].map(p => p.toLowerCase());
+                        const isAlive = players.some(p => p === 'a');
+
+                        if (isAlive) {
+                            currentlyAlive.push(name);
+                        } else {
+                            if (!isFirstLoad && aliveTeamsSet.has(name)) {
+                                eliminationQueue.push({ name: name });
+                            }
                         }
                     }
-
-                    teams.sort((a, b) => {
-                        if (b.total !== a.total) return b.total - a.total;             
-                        if (b.matchPts !== a.matchPts) return b.matchPts - a.matchPts; 
-                        if (b.wwcd !== a.wwcd) return b.wwcd - a.wwcd;                 
-                        return b.finishes - a.finishes;                                
-                    });
-
-                    allTeams = teams;
-                    renderPage(); 
-                })
-                .catch(err => console.error('Fetch error:', err));
+                }
+                aliveTeamsSet = new Set(currentlyAlive);
+                isFirstLoad = false;
+                
+                processQueue();
+            });
         }
 
-        fetchPoints();
-        setInterval(fetchPoints, 2000); 
-
-        setInterval(() => {
-            if (allTeams.length > teamsPerPage) {
-                isPaginating = true; 
-                const listContainer = document.getElementById('team-list');
+        function processQueue() {
+            if (eliminationQueue.length > 0 && !isAlertShowing) {
+                isAlertShowing = true; 
+                const teamData = eliminationQueue.shift(); 
                 
-                listContainer.style.opacity = 0;
+                showEliminationAlert(teamData, () => {
+                    setTimeout(() => {
+                        isAlertShowing = false; 
+                        processQueue(); 
+                    }, queueDelay);
+                });
+            }
+        }
+
+        function showEliminationAlert(teamData, onFinishedCallback) {
+            const display = document.getElementById('alert-display');
+            const nameLabel = document.getElementById('team-name');
+            const logoImg = document.getElementById('team-logo');
+
+            nameLabel.innerText = teamData.name;
+            logoImg.src = teamDatabase[teamData.name] || 'https://via.placeholder.com/150?text=NO+LOGO';
+
+            display.style.display = 'flex';
+            display.classList.remove('exit-anim');
+            display.classList.add('intro-anim');
+
+            setTimeout(() => {
+                display.classList.remove('intro-anim');
+                display.classList.add('exit-anim');
 
                 setTimeout(() => {
-                    currentPage++;
-                    if (currentPage * teamsPerPage >= allTeams.length) {
-                        currentPage = 0;
-                    }
-                    
-                    isPaginating = false; 
-                    renderPage();
-                    listContainer.style.opacity = 1; 
+                    display.style.display = 'none';
+                    onFinishedCallback();
                 }, 400); 
-            }
-        }, 7000); 
+            }, alertShowTime); 
+        }
 
+        fetchTeamInfo();
+        setInterval(fetchTeamInfo, 60000);
+        
+        checkEliminations();
+        setInterval(checkEliminations, 5000); 
     </script>
 </body>
 </html>
