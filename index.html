@@ -1,130 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BGMI Eliminated Banner with Queue</title>
+    <title>BGMI Queued Elimination Ribbon</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;600&family=Montserrat:wght@700&display=swap');
-
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden; 
-            font-family: 'Montserrat', sans-serif;
-            background-color: transparent; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: transparent; }
 
         #status { position: absolute; top: 10px; left: 10px; color: rgba(255,255,255,0.4); font-size: 11px; }
 
-        /* --- BANNER DESIGN & ANIMATIONS --- */
-        .banner-wrapper {
-            display: none; /* Hidden by default, controlled by JS queue */
+        #alert-display {
+            display: none; 
+            flex-direction: column;
+            align-items: center;
             opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            transform: scale(0.9);
+            transform: scale(0.8) translateY(50px);
         }
 
-        /* --- LOGO SECTION --- */
-        .logo-section {
-            width: 180px;
-            background-color: #1a2c3a;
+        #banner {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, #111 0%, #333 50%, #111 100%);
+            border: 2px solid #555;
+            border-radius: 6px;
+            padding: 10px 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
             position: relative;
-            border-right: 4px solid #00b4db;
+            z-index: 2; 
+        }
+
+        #logo-container {
+            width: 90px;
+            height: 90px;
+            background-color: #f39c12; 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px;
-            opacity: 0;
-            transform: translateX(-20px);
-            transition: all 0.5s ease-out;
+            margin-right: 20px;
+            box-shadow: 0 0 15px rgba(243,156,18,0.5);
         }
 
-        .position-no {
-            position: absolute;
-            top: 5px;
-            left: 10px;
+        #team-logo { width: 75px; height: 75px; object-fit: contain; }
+
+        #team-name { color: white; font-size: 38px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 3px; }
+
+        #ribbon {
+            background-color: #880000; 
+            border: 2px solid #cc0000;
             color: white;
+            padding: 8px 50px;
             font-size: 18px;
-            font-family: 'Teko', sans-serif;
-            letter-spacing: 1px;
-        }
-
-        .team-logo {
-            max-width: 120px;
-            max-height: 120px;
-            object-fit: contain;
-        }
-
-        /* --- RIGHT SECTION --- */
-        .right-section {
-            display: flex;
-            flex-direction: column;
-            width: 450px;
-        }
-
-        .finishes-box {
-            background-color: #1a1a1a;
-            color: #ffb347;
-            padding: 5px 20px;
-            font-size: 28px;
-            font-family: 'Teko', sans-serif;
-            letter-spacing: 2px;
-            width: max-content;
-            clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
-            padding-right: 40px;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: all 0.5s ease-out;
-        }
-
-        .eliminated-box {
-            background: linear-gradient(90deg, #00b4db, #0083b0, #1a1a24);
-            color: white;
-            font-size: 55px;
-            font-weight: 700;
-            padding: 5px 20px;
-            letter-spacing: 2px;
-            line-height: 1.1;
-            opacity: 0;
-            transform: scaleY(0);
-            transform-origin: top;
-            transition: all 0.4s ease-out;
-        }
-
-        .team-name-box {
-            background: linear-gradient(90deg, #f7971e, #ffd200);
-            color: #1a1a1a;
-            font-size: 24px;
-            font-weight: 700;
-            padding: 8px 20px;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.5s ease-out;
+            letter-spacing: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            transform: translateY(-5px); 
+            z-index: 1; 
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
         }
 
-        /* --- ANIMATION STATES (Triggered by JS) --- */
-        .banner-wrapper.show {
-            opacity: 1;
-            transform: scale(1);
+        .intro-anim {
+            animation: 
+                slideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+                fadeIn 0.6s ease-out forwards;
         }
 
-        .banner-wrapper.step-1 .eliminated-box {
-            opacity: 1;
-            transform: scaleY(1);
+        .exit-anim {
+            animation: 
+                slideOut 0.4s ease-in forwards,
+                fadeOut 0.4s ease-in forwards;
         }
 
-        .banner-wrapper.step-2 .logo-section,
-        .banner-wrapper.step-2 .finishes-box,
-        .banner-wrapper.step-2 .team-name-box {
-            opacity: 1;
-            transform: translate(0, 0);
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        @keyframes slideIn {
+            0% { transform: scale(0.8) translateY(50px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        @keyframes slideOut {
+            0% { transform: scale(1) translateY(0); }
+            100% { transform: scale(0.9) translateY(-100px); }
         }
     </style>
 </head>
@@ -132,15 +89,15 @@
 
     <div id="status">Syncing...</div>
 
-    <div class="banner-wrapper" id="banner">
-        <div class="logo-section">
-            <div class="position-no" id="pos-text">#0</div>
-            <img src="hills_logo.png" alt="Team Logo" class="team-logo" id="logo-img" onerror="this.src='hills_logo.png'">
+    <div id="alert-display">
+        <div id="banner">
+            <div id="logo-container">
+                <img id="team-logo" src="" onerror="this.src='https://via.placeholder.com/150?text=NO+LOGO'">
+            </div>
+            <p id="team-name">TEAM NAME</p>
         </div>
-        <div class="right-section">
-            <div class="finishes-box" id="finishes-text">0 FINISHES</div>
-            <div class="eliminated-box">ELIMINATED</div>
-            <div class="team-name-box" id="team-text">TEAM NAME</div>
+        <div id="ribbon">
+            ELIMINATED
         </div>
     </div>
 
@@ -158,11 +115,11 @@
 
         let eliminationQueue = [];
         let isAlertShowing = false;
-        
-        // Timing settings
-        const alertShowTime = 6000; // Total time banner stays on screen  
-        const queueDelay = 1000;     // Wait time between eliminations if multiple happen at once
+        const alertShowTime = 5000;  
+        const queueDelay = 1000;     
 
+        // --- NEW GOOGLE DRIVE FIX ---
+        // Converts standard Drive links to direct Thumbnail API links
         function getDriveImage(url) {
             if (!url) return '';
             const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -178,6 +135,7 @@
                 rows.forEach((row, index) => {
                     if (index === 0) return;
                     const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
+                    // Run the URL through the new converter before storing it
                     if (cols[0]) teamDatabase[cols[0]] = getDriveImage(cols[1]);
                 });
             });
@@ -194,14 +152,6 @@
                     
                     if (cols.length >= 7) {
                         const name = cols[0];
-                        
-                        // *** IMPORTANT: CHANGE THESE NUMBERS ***
-                        // Check your Google sheet. If "Position" is in column B, it's cols[1]. 
-                        // If "Total Finishes" is in Column H, it's cols[7].
-                        const position = cols[1] || "0"; 
-                        const finishes = cols[2] || "0"; 
-
-                        // This checks columns D, E, F, G for an 'a' (alive)
                         const players = [cols[3], cols[4], cols[5], cols[6]].map(p => p.toLowerCase());
                         const isAlive = players.some(p => p === 'a');
 
@@ -209,8 +159,7 @@
                             currentlyAlive.push(name);
                         } else {
                             if (!isFirstLoad && aliveTeamsSet.has(name)) {
-                                // Added finishes and position to the queue data
-                                eliminationQueue.push({ name: name, finishes: finishes, position: position });
+                                eliminationQueue.push({ name: name });
                             }
                         }
                     }
@@ -237,45 +186,33 @@
         }
 
         function showEliminationAlert(teamData, onFinishedCallback) {
-            const banner = document.getElementById('banner');
+            const display = document.getElementById('alert-display');
+            const nameLabel = document.getElementById('team-name');
+            const logoImg = document.getElementById('team-logo');
 
-            // 1. Populate data into the banner
-            document.getElementById('team-text').innerText = teamData.name;
-            document.getElementById('pos-text').innerText = `#${teamData.position}`;
-            document.getElementById('finishes-text').innerText = `${teamData.finishes} FINISHES`;
-            
-            // Uses your updated transparent png as the default fallback
-            document.getElementById('logo-img').src = teamDatabase[teamData.name] || 'hills_logo.png';
+            nameLabel.innerText = teamData.name;
+            logoImg.src = teamDatabase[teamData.name] || 'https://via.placeholder.com/150?text=NO+LOGO';
 
-            // 2. Reset classes & show wrapper
-            banner.className = 'banner-wrapper';
-            banner.style.display = 'flex';
+            display.style.display = 'flex';
+            display.classList.remove('exit-anim');
+            display.classList.add('intro-anim');
 
-            // 3. Play Intro Animations Sequence
-            setTimeout(() => { banner.classList.add('show'); }, 100);       // Fade in wrapper
-            setTimeout(() => { banner.classList.add('step-1'); }, 600);     // Expand "ELIMINATED"
-            setTimeout(() => { banner.classList.add('step-2'); }, 1200);    // Slide in the rest
-
-            // 4. Play Outro Animation after alertShowTime
             setTimeout(() => {
-                // Removing the classes triggers the CSS transitions in reverse
-                banner.classList.remove('step-2', 'step-1', 'show');
+                display.classList.remove('intro-anim');
+                display.classList.add('exit-anim');
 
-                // Wait for the reverse transition to finish before hiding completely
                 setTimeout(() => {
-                    banner.style.display = 'none';
-                    onFinishedCallback(); // Triggers the next queue item
-                }, 600); 
-
+                    display.style.display = 'none';
+                    onFinishedCallback();
+                }, 400); 
             }, alertShowTime); 
         }
 
-        // Initialize
         fetchTeamInfo();
-        setInterval(fetchTeamInfo, 60000); // Check info/logos every 60s
+        setInterval(fetchTeamInfo, 60000);
         
         checkEliminations();
-        setInterval(checkEliminations, 5000); // Check for "k" triggers every 5s
+        setInterval(checkEliminations, 5000); 
     </script>
 </body>
 </html>
